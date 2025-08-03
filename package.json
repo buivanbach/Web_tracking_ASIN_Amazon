@@ -12,7 +12,11 @@
     "run": "node scripts/run/run.js",
     "setup": "powershell -ExecutionPolicy Bypass -File setup.ps1",
     "run:win": "powershell -ExecutionPolicy Bypass -File run.ps1",
-    "setup:firewall": "sudo chmod +x setup-firewall.sh && ./setup-firewall.sh"
+    "setup:firewall": "sudo chmod +x setup-firewall.sh && ./setup-firewall.sh",
+    "aws:deploy": "sudo chmod +x aws-auto-deploy.sh && ./aws-auto-deploy.sh",
+    "aws:manage": "chmod +x manage-service.sh && ./manage-service.sh",
+    "aws:auto-restart": "sudo chmod +x setup-auto-restart.sh && ./setup-auto-restart.sh",
+    "aws:monitor": "chmod +x monitor.sh && ./monitor.sh"
   },
   "dependencies": {
     "body-parser": "^1.20.2",
