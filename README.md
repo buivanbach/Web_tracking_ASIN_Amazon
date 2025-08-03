@@ -45,13 +45,13 @@ Web_RANKing/
 npm run setup
 ```
 
-#### **Linux/Mac:**
+#### **Ubuntu/Linux:**
 ```bash
-# Manual setup (Linux/Mac users need to install manually)
-# 1. Install Node.js: https://nodejs.org/
-# 2. Install Python: https://python.org/downloads/
-# 3. Install Chrome: https://chrome.google.com/
-# 4. Run: npm install && pip install -r python/requirements.txt
+# Make script executable
+chmod +x setup-ubuntu.sh
+
+# Run setup script
+./setup-ubuntu.sh
 ```
 
 ### **Option 2: Manual Setup**
@@ -87,12 +87,13 @@ npm run setup
 npm run run:win
 ```
 
-#### **Linux/Mac:**
+#### **Ubuntu/Linux:**
 ```bash
-# Manual run
-npm start
-# OR
-node server.js
+# Make script executable
+chmod +x run-ubuntu.sh
+
+# Run application
+./run-ubuntu.sh
 ```
 
 **Features of Run Scripts:**
