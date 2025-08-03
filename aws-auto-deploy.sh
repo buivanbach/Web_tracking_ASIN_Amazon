@@ -125,8 +125,13 @@ npm install
 print_success "Node.js dependencies installed"
 
 print_status "Installing Python dependencies..."
-pip3 install -r python/requirements.txt
+pip3 install selenium beautifulsoup4 requests easyocr webdriver-manager
 print_success "Python dependencies installed"
+
+# Create python symlink for compatibility
+print_status "Creating Python symlink..."
+ln -sf /usr/bin/python3 /usr/bin/python
+print_success "Python symlink created"
 
 # Create directories
 print_status "Creating project directories..."
