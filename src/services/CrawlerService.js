@@ -1,4 +1,4 @@
-const { spawn } = require('child_process');
+const { spawn, execSync } = require('child_process');
 const logger = require('../utils/logger');
 
 class CrawlerService {
@@ -20,29 +20,44 @@ class CrawlerService {
     async crawlUrls(urls) {
         logger.info(`Starting crawl for ${urls.length} URLs`);
         
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             // Try different Python commands
-            const pythonCommands = ['python', 'python3', 'py'];
+            const pythonCommands = ['python3', 'python', 'py'];
             let pythonProcess = null;
             let commandUsed = null;
             
+            // First, check which Python command is available
             for (const command of pythonCommands) {
                 try {
-                    pythonProcess = spawn(command, ['python/crawl_and_update_fixed.py'], {
-                        stdio: ['pipe', 'pipe', 'pipe']
-                    });
+                    // Test if command exists using 'which' (Linux) or 'where' (Windows)
+                    const isWindows = process.platform === 'win32';
+                    const checkCommand = isWindows ? `where ${command}` : `which ${command}`;
+                    
+                    execSync(checkCommand, { stdio: 'ignore' });
                     commandUsed = command;
-                    logger.info(`Using Python command: ${command}`);
+                    logger.info(`Found Python command: ${command}`);
                     break;
                 } catch (error) {
-                    logger.warn(`Failed to use ${command}: ${error.message}`);
+                    logger.warn(`Python command '${command}' not found: ${error.message}`);
                     continue;
                 }
             }
             
-            if (!pythonProcess) {
+            if (!commandUsed) {
                 const error = new Error('No Python command available. Please install Python and add it to PATH.');
                 logger.error(error.message);
+                reject(error);
+                return;
+            }
+            
+            // Now spawn the process with the found command
+            try {
+                pythonProcess = spawn(commandUsed, ['python/crawl_and_update_fixed.py'], {
+                    stdio: ['pipe', 'pipe', 'pipe']
+                });
+                logger.info(`Using Python command: ${commandUsed}`);
+            } catch (error) {
+                logger.error(`Failed to spawn Python process with ${commandUsed}: ${error.message}`);
                 reject(error);
                 return;
             }
