@@ -5,12 +5,14 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "start:prod": "node server-production.js",
     "dev": "nodemon server.js",
     "crawl": "python python/crawl_and_update_fixed.py",
     "test-setup": "node test-setup.js",
     "run": "node scripts/run/run.js",
     "setup": "powershell -ExecutionPolicy Bypass -File setup.ps1",
-    "run:win": "powershell -ExecutionPolicy Bypass -File run.ps1"
+    "run:win": "powershell -ExecutionPolicy Bypass -File run.ps1",
+    "setup:firewall": "sudo chmod +x setup-firewall.sh && ./setup-firewall.sh"
   },
   "dependencies": {
     "body-parser": "^1.20.2",
