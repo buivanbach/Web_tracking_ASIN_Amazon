@@ -34,85 +34,143 @@ Web_RANKing/
 
 ## 🚀 Quick Start
 
-### **Option 1: Auto Setup (Recommended)**
+### **Windows Setup**
+```powershell
+# Clone repository
+git clone https://github.com/buivanbach/Web_tracking_ASIN_Amazon.git
+cd Web_tracking_ASIN_Amazon
 
-#### **Windows:**
-```bash
-# PowerShell (Recommended)
+# Auto setup
 .\setup.ps1
 
-# OR npm script
-npm run setup
-```
-
-#### **Ubuntu/Linux:**
-```bash
-# Make script executable
-chmod +x setup-ubuntu.sh
-
-# Run setup script
-./setup-ubuntu.sh
-```
-
-### **Option 2: Manual Setup**
-
-1. **Install dependencies:**
-   ```bash
-   npm install
-   pip install -r requirements.txt
-   ```
-
-2. **Start the application:**
-   ```bash
-   npm start
-   # or for development
-   npm run dev
-   ```
-
-3. **Access the application:**
-   ```
-   http://localhost:3000
-   ```
-
-## 🚀 Quick Run
-
-### **One-Command Run (After Setup)**
-
-#### **Windows:**
-```bash
-# PowerShell (Recommended)
+# Run application
 .\run.ps1
-
-# OR npm script
-npm run run:win
 ```
 
-#### **Ubuntu/Linux:**
+### **Ubuntu/Linux Setup**
 ```bash
-# Make script executable
-chmod +x run-ubuntu.sh
+# Clone repository
+git clone https://github.com/buivanbach/Web_tracking_ASIN_Amazon.git
+cd Web_tracking_ASIN_Amazon
+
+# Auto setup
+chmod +x setup-ubuntu.sh
+./setup-ubuntu.sh
 
 # Run application
+chmod +x run-ubuntu.sh
 ./run-ubuntu.sh
 ```
 
-**Features of Run Scripts:**
-- ✅ Auto-check dependencies
-- ✅ Auto-install missing packages
-- ✅ Auto-setup environment
-- ✅ Port conflict detection
-- ✅ Comprehensive error handling
-- ✅ User-friendly output
+### **AWS Ubuntu Setup**
+```bash
+# SSH vào EC2
+ssh -i your-key.pem ubuntu@YOUR_EC2_IP
+
+# Clone và auto deploy
+git clone https://github.com/buivanbach/Web_tracking_ASIN_Amazon.git
+cd Web_tracking_ASIN_Amazon
+
+# Auto deploy
+sudo chmod +x aws-auto-deploy.sh
+./aws-auto-deploy.sh
+
+# Setup auto restart
+sudo chmod +x setup-auto-restart.sh
+./setup-auto-restart.sh
+```
+
+## 🌐 Access URLs
+
+### **Local Development**
+```
+Application: http://localhost:3000
+Health Check: http://localhost:3000/health
+```
+
+### **AWS Production**
+```
+Application: http://YOUR_EC2_IP:3000
+Health Check: http://YOUR_EC2_IP:3000/health
+```
+
+## 🔧 Management Commands
+
+### **Windows**
+```powershell
+# Start application
+.\run.ps1
+
+# Or manually
+npm start
+```
+
+### **Ubuntu/Linux**
+```bash
+# Start application
+./run-ubuntu.sh
+
+# Or manually
+npm start
+```
+
+### **AWS Ubuntu**
+```bash
+# Check service status
+sudo systemctl status web-tracking
+
+# Start/Stop/Restart service
+sudo systemctl start web-tracking
+sudo systemctl stop web-tracking
+sudo systemctl restart web-tracking
+
+# View logs
+tail -f data/logs/app.log
+
+# Monitor system
+./monitor.sh
+```
 
 ## ✨ Features
 
-- **Product Tracking**: Monitor Amazon product rankings
-- **Automated Crawling**: Scheduled crawling every 2 hours
-- **Real-time Updates**: Live UI updates during crawling
-- **Trending Products**: Identify products with >10% rank improvement
-- **Amazon-like UI**: Modern product grid interface
+- **ASIN Tracking**: Monitor Amazon product ASINs and rankings
+- **Automated Crawling**: Scheduled crawling with configurable intervals
+- **Real-time Updates**: Live UI updates during crawling process
+- **Persistent Settings**: Crawl schedule saved to database
+- **Modern UI**: Amazon-like product grid interface
+- **Trending Analysis**: Identify products with rank improvements
 - **URL Management**: Easy URL submission and management
-- **Settings Panel**: Configure crawl intervals and database operations
+
+## 🚀 AWS Deployment
+
+### **Quick Deploy**
+```bash
+# SSH vào EC2
+ssh -i your-key.pem ubuntu@YOUR_EC2_IP
+
+# Auto deploy
+git clone https://github.com/buivanbach/Web_tracking_ASIN_Amazon.git
+cd Web_tracking_ASIN_Amazon
+sudo chmod +x aws-auto-deploy.sh
+./aws-auto-deploy.sh
+```
+
+### **Security Group Configuration**
+```
+Type        Port    Source
+SSH         22      0.0.0.0/0
+HTTP        80      0.0.0.0/0
+HTTPS       443     0.0.0.0/0
+Custom TCP  3000    0.0.0.0/0  ← Required for application
+```
+
+### **Auto Features**
+- ✅ Auto-start on reboot
+- ✅ Health check every 5 minutes
+- ✅ Auto restart if application fails
+- ✅ Daily auto updates
+- ✅ Log rotation
+- ✅ System monitoring
 
 ## 🔧 Technology Stack
 
