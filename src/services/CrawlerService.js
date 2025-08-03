@@ -21,9 +21,31 @@ class CrawlerService {
         logger.info(`Starting crawl for ${urls.length} URLs`);
         
         return new Promise((resolve, reject) => {
-            const pythonProcess = spawn('python', ['python/crawl_and_update_fixed.py'], {
-                stdio: ['pipe', 'pipe', 'pipe']
-            });
+            // Try different Python commands
+            const pythonCommands = ['python', 'python3', 'py'];
+            let pythonProcess = null;
+            let commandUsed = null;
+            
+            for (const command of pythonCommands) {
+                try {
+                    pythonProcess = spawn(command, ['python/crawl_and_update_fixed.py'], {
+                        stdio: ['pipe', 'pipe', 'pipe']
+                    });
+                    commandUsed = command;
+                    logger.info(`Using Python command: ${command}`);
+                    break;
+                } catch (error) {
+                    logger.warn(`Failed to use ${command}: ${error.message}`);
+                    continue;
+                }
+            }
+            
+            if (!pythonProcess) {
+                const error = new Error('No Python command available. Please install Python and add it to PATH.');
+                logger.error(error.message);
+                reject(error);
+                return;
+            }
 
             // Send URLs to Python process
             pythonProcess.stdin.write(JSON.stringify(urls));
