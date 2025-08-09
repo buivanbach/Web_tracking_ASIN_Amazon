@@ -1,4 +1,5 @@
 const { spawn, execSync } = require('child_process');
+const path = require('path');
 const logger = require('../utils/logger');
 
 class CrawlerService {
@@ -50,10 +51,15 @@ class CrawlerService {
                 return;
             }
             
+            // Resolve script path so it works regardless of working directory
+            const scriptPath = path.join(__dirname, '..', '..', 'python', 'crawl_and_update_fixed.py');
+            const repoRoot = path.join(__dirname, '..', '..');
+
             // Now spawn the process with the found command
             try {
-                pythonProcess = spawn(commandUsed, ['python/crawl_and_update_fixed.py'], {
-                    stdio: ['pipe', 'pipe', 'pipe']
+                pythonProcess = spawn(commandUsed, [scriptPath], {
+                    stdio: ['pipe', 'pipe', 'pipe'],
+                    cwd: repoRoot
                 });
                 logger.info(`Using Python command: ${commandUsed}`);
             } catch (error) {
