@@ -12,6 +12,7 @@ import urllib.request
 import easyocr
 import os
 from datetime import datetime
+from fake_useragent import UserAgent
 
 # Suppress warnings and errors
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # Suppress TensorFlow warnings
@@ -28,6 +29,19 @@ from webdriver_manager.chrome import ChromeDriverManager
 from multiprocessing import Pool, Lock
 import requests
 from bs4 import BeautifulSoup
+
+ua = UserAgent()
+
+
+def get_random_user_agent():
+    """Return a random user-agent string using fake-useragent."""
+    try:
+        return ua.random
+    except Exception:
+        return (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        )
 
 class AmazonProductCrawler:
     def __init__(self, db_path='database.db'):
@@ -247,9 +261,9 @@ class AmazonProductCrawler:
     def extract_product_data_requests(self, url):
         """Extract product information using requests (fallback method)"""
         print(f"Using requests fallback for: {url}")
-        
+        user_agent = get_random_user_agent()
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'User-Agent': user_agent,
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
             'Accept-Language': 'en-US,en;q=0.5',
             'Accept-Encoding': 'gzip, deflate',
@@ -336,10 +350,12 @@ class AmazonProductCrawler:
     def process_single_url(self, url):
         """Process a single URL and return product data"""
         print(f"Processing: {url}")
+        user_agent = get_random_user_agent()
 
         # Try Selenium first
         try:
             options = webdriver.ChromeOptions()
+            options.add_argument(f"--user-agent={user_agent}")
             options.add_argument("--headless=new")  # Enable headless mode
             options.add_argument("--no-sandbox")
             options.add_argument("--disable-dev-shm-usage")
