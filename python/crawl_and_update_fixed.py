@@ -6,18 +6,12 @@ Extracts product information from Amazon URLs and updates SQLite database
 
 import sys
 import json
-import sqlite3
 import time
 import re
 import random
-import urllib.request
-import easyocr
 import os
 from datetime import datetime
 
-# Suppress warnings and errors
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # Suppress TensorFlow warnings
-os.environ['CUDA_VISIBLE_DEVICES'] = ''    # Disable GPU warnings
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -27,7 +21,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
-from multiprocessing import Pool, Lock
+from multiprocessing import Lock
 import requests
 from bs4 import BeautifulSoup
 from collections import deque
@@ -95,16 +89,7 @@ class AmazonProductCrawler:
             os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
         except Exception:
             pass
-        # Suppress EasyOCR warnings
-        import warnings
-        warnings.filterwarnings("ignore", category=UserWarning)
-        
-        # Initialize EasyOCR with quiet mode
-        try:
-            self.reader = easyocr.Reader(['en'], gpu=False, verbose=False)
-        except Exception as e:
-            print(f"EasyOCR initialization warning: {e}")
-            self.reader = None
+        # No OCR usage anymore
         self.lock = Lock()
         # Database manager (centralized DB operations)
         self.db_manager = DatabaseManager(self.db_path)
@@ -153,77 +138,7 @@ class AmazonProductCrawler:
             print(f"Database connection error: {e}")
             return False
 
-    def init_tables(self):
-        """Create tables if they do not exist to avoid 'no such table' errors"""
-        # products table
-        self.cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS products (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                price REAL,
-                rank INTEGER,
-                asin TEXT UNIQUE,
-                brand TEXT,
-                ratings TEXT,
-                stars TEXT,
-                image_url TEXT,
-                date TEXT,
-                url TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-            """
-        )
-        # Attempt to add 'date' column if missing (ignore if exists)
-        try:
-            self.cursor.execute("ALTER TABLE products ADD COLUMN date TEXT")
-        except Exception:
-            pass
-
-        # rank_history table
-        self.cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS rank_history (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                asin TEXT NOT NULL,
-                rank INTEGER NOT NULL,
-                price REAL,
-                recorded_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-            """
-        )
-
-        # url_lists table
-        self.cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS url_lists (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                urls TEXT NOT NULL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-            """
-        )
-
-        # settings table
-        self.cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS settings (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                key TEXT UNIQUE NOT NULL,
-                value TEXT NOT NULL,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-            """
-        )
-
-        # default crawl_interval if not exists
-        self.cursor.execute(
-            """
-            INSERT OR IGNORE INTO settings (key, value) VALUES ('crawl_interval', '2')
-            """
-        )
-        self.conn.commit()
+    # init_tables was moved to DatabaseManager and is no longer used
 
     # OCR-based captcha solving removed per configuration; instead we rotate UA and retry
 
