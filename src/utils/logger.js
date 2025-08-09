@@ -19,15 +19,15 @@ class Logger {
         return `[${timestamp}] [${type}] ${message}`;
     }
 
-    writeToFile(message) {
-        const formattedMessage = this.formatMessage(message);
+    writeToFile(message, type = 'INFO') {
+        const formattedMessage = this.formatMessage(message, type);
         fs.appendFileSync(this.logFile, formattedMessage + '\n');
     }
 
     log(message, type = 'INFO') {
         const formattedMessage = this.formatMessage(message, type);
         console.log(formattedMessage);
-        this.writeToFile(message);
+        this.writeToFile(message, type);
     }
 
     error(message) {
