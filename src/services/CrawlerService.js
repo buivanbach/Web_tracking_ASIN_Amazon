@@ -1,6 +1,52 @@
-const { spawn, execSync } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const path = require('path');
 const logger = require('../utils/logger');
+
+// Detect a working Python command across platforms
+function findWorkingPythonCommand() {
+    const isWindows = process.platform === 'win32';
+
+    // Each candidate can include required prefix args (e.g., -3 for py)
+    const candidates = isWindows
+        ? [
+            { cmd: 'py', args: ['-3'] },
+            { cmd: 'py', args: [] },
+            { cmd: 'python', args: [] },
+            { cmd: 'python3', args: [] },
+        ]
+        : [
+            { cmd: 'python3', args: [] },
+            { cmd: 'python', args: [] },
+        ];
+
+    for (const candidate of candidates) {
+        try {
+            // Validate by executing "--version" and requiring a version-like output
+            const result = spawnSync(candidate.cmd, [...candidate.args, '--version'], {
+                encoding: 'utf8',
+                windowsHide: true,
+            });
+
+            const combinedOutput = `${result.stdout || ''}${result.stderr || ''}`.trim();
+            const hasVersion = /Python\s+\d+\.\d+\.\d+/i.test(combinedOutput);
+
+            if (result.status === 0 && hasVersion) {
+                logger.info(`Detected Python interpreter: ${candidate.cmd} ${candidate.args.join(' ')}`.trim());
+                return candidate;
+            }
+
+            // Log why this candidate was skipped (use debug level to avoid noise)
+            logger.debug(
+                `Skipping Python candidate '${candidate.cmd} ${candidate.args.join(' ')}' - status: ${result.status}, output: ${combinedOutput}`
+            );
+        } catch (error) {
+            // Candidate not runnable
+            logger.debug(`Python candidate '${candidate.cmd} ${candidate.args.join(' ')}' failed: ${error.message}`);
+        }
+    }
+
+    return null;
+}
 
 class CrawlerService {
     constructor() {
@@ -20,50 +66,37 @@ class CrawlerService {
 
     async crawlUrls(urls) {
         logger.info(`Starting crawl for ${urls.length} URLs`);
-        
+
         return new Promise(async (resolve, reject) => {
-            // Try different Python commands
-            const pythonCommands = ['python3', 'python', 'py'];
             let pythonProcess = null;
-            let commandUsed = null;
-            
-            // First, check which Python command is available
-            for (const command of pythonCommands) {
-                try {
-                    // Test if command exists using 'which' (Linux) or 'where' (Windows)
-                    const isWindows = process.platform === 'win32';
-                    const checkCommand = isWindows ? `where ${command}` : `which ${command}`;
-                    
-                    execSync(checkCommand, { stdio: 'ignore' });
-                    commandUsed = command;
-                    logger.info(`Found Python command: ${command}`);
-                    break;
-                } catch (error) {
-                    logger.warn(`Python command '${command}' not found: ${error.message}`);
-                    continue;
-                }
-            }
-            
-            if (!commandUsed) {
-                const error = new Error('No Python command available. Please install Python and add it to PATH.');
+
+            const detected = findWorkingPythonCommand();
+            if (!detected) {
+                const isWindows = process.platform === 'win32';
+                const helpMessage = isWindows
+                    ? 'Install Python 3.x from python.org and ensure the "py" launcher or "python" is in PATH. Also consider disabling Windows App Execution Aliases for python/python3.'
+                    : 'Install Python 3.x (e.g., sudo apt-get install python3) and ensure python3 is available in PATH.';
+                const error = new Error(`No working Python interpreter found. ${helpMessage}`);
                 logger.error(error.message);
                 reject(error);
                 return;
             }
-            
+
             // Resolve script path so it works regardless of working directory
             const scriptPath = path.join(__dirname, '..', '..', 'python', 'crawl_and_update_fixed.py');
             const repoRoot = path.join(__dirname, '..', '..');
 
             // Now spawn the process with the found command
             try {
-                pythonProcess = spawn(commandUsed, [scriptPath], {
+                const spawnArgs = [...detected.args, scriptPath];
+                pythonProcess = spawn(detected.cmd, spawnArgs, {
                     stdio: ['pipe', 'pipe', 'pipe'],
-                    cwd: repoRoot
+                    cwd: repoRoot,
+                    env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
                 });
-                logger.info(`Using Python command: ${commandUsed}`);
+                logger.info(`Using Python command: ${detected.cmd} ${detected.args.join(' ')}`.trim());
             } catch (error) {
-                logger.error(`Failed to spawn Python process with ${commandUsed}: ${error.message}`);
+                logger.error(`Failed to spawn Python process with ${detected.cmd}: ${error.message}`);
                 reject(error);
                 return;
             }

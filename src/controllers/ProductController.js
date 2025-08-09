@@ -52,10 +52,15 @@ class ProductController {
             // Save URLs to database
             await serviceManager.getCrawlerService().saveUrlsToDatabase(urls);
             
-            // Start crawling
-            await serviceManager.getCrawlerService().crawlUrls(urls);
+            // Start crawling asynchronously (do not block the HTTP response)
+            serviceManager
+                .getCrawlerService()
+                .crawlUrls(urls)
+                .then(() => logger.info('Crawling finished (async kickoff)'))
+                .catch((error) => logger.error(`Crawling failed (async kickoff): ${error.message}`));
             
-            res.json({ message: 'Crawling started successfully' });
+            // Return immediately so the client can begin polling for per-item updates
+            res.status(202).json({ message: 'Crawling started' });
         } catch (error) {
             logger.error(`Error starting crawl: ${error.message}`);
             res.status(500).json({ error: error.message });

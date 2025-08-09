@@ -18,6 +18,15 @@ body {
     min-height: 100vh;
 }
 
+/* Keep sidebar fixed while scrolling main content */
+.sidebar {
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    height: 100vh;
+    overflow-y: auto;
+}
+
 /* Sidebar */
 .sidebar {
     width: 250px;
@@ -460,6 +469,30 @@ body {
     margin-top: 15px;
 }
 
+.product-actions .crawl-btn,
+.product-actions .delete-btn {
+    border: none;
+    background: #f0f0f0;
+    color: #333;
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.product-actions .crawl-btn:hover {
+    background: #d4edda;
+}
+
+.product-actions .delete-btn:hover {
+    background: #f8d7da;
+}
+
+.product-actions .crawl-btn[disabled] {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
 .product-actions button {
     flex: 1;
     padding: 8px 12px;
@@ -470,11 +503,10 @@ body {
     transition: all 0.3s ease;
 }
 
-.delete-btn {
+.delete-btn,
+.crawl-btn {
     position: absolute;
     top: 10px;
-    right: 10px;
-    background: #dc3545;
     color: white;
     border: none;
     padding: 8px;
@@ -488,15 +520,15 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    opacity: 0.8;
+    opacity: 0.9;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
-.delete-btn:hover {
-    background: #c82333;
-    opacity: 1;
-    transform: scale(1.1);
-}
+.delete-btn { right: 10px; background: #dc3545; }
+.delete-btn:hover { background: #c82333; opacity: 1; transform: scale(1.1); }
+
+.crawl-btn { right: 50px; background: #28a745; }
+.crawl-btn:hover { background: #218838; opacity: 1; transform: scale(1.1); }
 
 .last-update {
     position: absolute;

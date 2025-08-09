@@ -71,6 +71,12 @@ function setupEventListeners() {
     // Refresh button
     refreshBtn.addEventListener('click', loadProducts);
     
+    // Recrawl all button
+    const recrawlAllBtn = document.getElementById('recrawlAllBtn');
+    if (recrawlAllBtn) {
+        recrawlAllBtn.addEventListener('click', recrawlAllProducts);
+    }
+    
     // URL submission
     addUrlsBtn.addEventListener('click', handleUrlSubmission);
     
@@ -92,6 +98,36 @@ function setupEventListeners() {
         settingsTab.addEventListener('click', () => {
             setTimeout(loadCrawlInterval, 100); // Small delay to ensure tab is loaded
         });
+    }
+}
+// Recrawl all existing products
+async function recrawlAllProducts() {
+    try {
+        if (!allProducts || allProducts.length === 0) {
+            showError('No products to recrawl');
+            return;
+        }
+        const urls = allProducts.map(p => p.url).filter(Boolean);
+        if (urls.length === 0) {
+            showError('No valid URLs to recrawl');
+            return;
+        }
+        showLoadingStatus(`Starting recrawl for ${urls.length} products...`);
+        const response = await fetch('/api/crawl', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ urls })
+        });
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.error || 'Failed to start recrawl');
+        }
+        showSuccessStatus('Recrawl started');
+        // Start real-time updates for all URLs
+        startRealTimeUpdates(urls);
+    } catch (err) {
+        console.error('Recrawl all failed:', err);
+        showErrorStatus('Recrawl all failed: ' + (err.message || 'Unknown error'));
     }
 }
 
@@ -162,7 +198,8 @@ function renderTrendingProducts(products) {
 function createProductCard(product, isTrending = false) {
     const price = product.price ? `$${product.price}` : 'N/A';
     const rank = product.rank ? `#${product.rank.toLocaleString()}` : 'N/A';
-    const imageUrl = product.image_url && product.image_url !== 'Not found' ? product.image_url : null;
+    const directImageUrl = product.image_url && product.image_url !== 'Not found' ? product.image_url : null;
+    const proxyImageUrl = directImageUrl ? `/api/proxy-image?url=${encodeURIComponent(directImageUrl)}` : null;
     const lastUpdate = product.last_update || 'Unknown';
     const rankChangePercent = product.rank_change_percent;
     
@@ -185,11 +222,11 @@ function createProductCard(product, isTrending = false) {
             <div class="last-update">Last update: ${lastUpdate}</div>
             
             <div class="product-image" onclick="openProductUrl('${product.url}')" style="cursor: pointer;">
-                ${imageUrl ? 
-                    `<img src="${imageUrl}" alt="${product.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : 
+                ${directImageUrl ? 
+                    `<img src="${directImageUrl}" alt="${product.name}" onerror="if(!this.dataset.retry){this.dataset.retry='1'; this.src='${proxyImageUrl}';} else { this.style.display='none'; this.nextElementSibling.style.display='flex'; }">` : 
                     ''
                 }
-                <div class="no-image" style="${imageUrl ? 'display: none;' : ''}">
+                <div class="no-image" style="${directImageUrl ? 'display: none;' : ''}">
                     <i class="fas fa-image"></i>
                 </div>
             </div>
@@ -228,6 +265,9 @@ function createProductCard(product, isTrending = false) {
                 </div>
                 
                 <div class="product-actions">
+                    <button class="crawl-btn" title="Re-crawl this product" onclick="crawlProduct('${product.url}', ${product.id})">
+                        <i class="fas fa-play"></i>
+                    </button>
                     <button class="delete-btn" onclick="deleteProduct(${product.id})">
                         <i class="fas fa-trash"></i>
                     </button>
@@ -235,6 +275,50 @@ function createProductCard(product, isTrending = false) {
             </div>
         </div>
     `;
+}
+
+// Crawl a single product by URL
+async function crawlProduct(url, productId) {
+    try {
+        if (!url || url === 'Not found') {
+            showError('No valid URL to crawl');
+            return;
+        }
+
+        const card = document.querySelector(`.product-card[data-id="${productId}"]`);
+        const button = card ? card.querySelector('.crawl-btn') : null;
+        if (button) {
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        }
+
+        showLoadingStatus('Starting crawling for selected product...');
+
+        const response = await fetch('/api/crawl', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ urls: [url] })
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to start crawl');
+        }
+
+        showSuccessStatus('Crawling started');
+        // Reuse existing real-time updates mechanism for a single URL
+        startRealTimeUpdates([url]);
+    } catch (err) {
+        console.error('Crawl product failed:', err);
+        showErrorStatus('Crawl failed: ' + (err.message || 'Unknown error'));
+    } finally {
+        const card = document.querySelector(`.product-card[data-id="${productId}"]`);
+        const button = card ? card.querySelector('.crawl-btn') : null;
+        if (button) {
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-play"></i>';
+        }
+    }
 }
 
 // Render no products message
