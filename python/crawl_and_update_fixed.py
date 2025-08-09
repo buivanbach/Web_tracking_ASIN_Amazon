@@ -8,6 +8,7 @@ import sys
 import json
 import sqlite3
 import time
+import random
 import urllib.request
 import easyocr
 import os
@@ -28,6 +29,19 @@ from webdriver_manager.chrome import ChromeDriverManager
 from multiprocessing import Pool, Lock
 import requests
 from bs4 import BeautifulSoup
+
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:115.0) Gecko/20100101 Firefox/115.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/120.0.0.0 Mobile/15E148 Safari/604.1",
+]
+
+
+def get_random_user_agent():
+    """Return a random user-agent string."""
+    return random.choice(USER_AGENTS)
 
 class AmazonProductCrawler:
     def __init__(self, db_path='database.db'):
@@ -247,9 +261,9 @@ class AmazonProductCrawler:
     def extract_product_data_requests(self, url):
         """Extract product information using requests (fallback method)"""
         print(f"Using requests fallback for: {url}")
-        
+        user_agent = get_random_user_agent()
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'User-Agent': user_agent,
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
             'Accept-Language': 'en-US,en;q=0.5',
             'Accept-Encoding': 'gzip, deflate',
@@ -336,10 +350,12 @@ class AmazonProductCrawler:
     def process_single_url(self, url):
         """Process a single URL and return product data"""
         print(f"Processing: {url}")
+        user_agent = get_random_user_agent()
 
         # Try Selenium first
         try:
             options = webdriver.ChromeOptions()
+            options.add_argument(f"--user-agent={user_agent}")
             options.add_argument("--headless=new")  # Enable headless mode
             options.add_argument("--no-sandbox")
             options.add_argument("--disable-dev-shm-usage")
